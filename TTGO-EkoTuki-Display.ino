@@ -9,12 +9,14 @@
 #include <HTTPClient.h>
 
 #include "esp_adc_cal.h"
-#include "bmp.h"
+// #include "bmp.h"
 
 #include "ekotuki_logo.h"
 #include "foli_logo.h"
 #include "te_logo.h"
 #include "tsp_logo.h"
+
+#include "wifisetup.h"
 
 #include <JPEGDecoder.h>
 
@@ -202,6 +204,9 @@ void loadBike()
     const char* name=repo["name"];        
     int bikes=repo["avl_bikes"];
 
+    Serial.println(name);
+    Serial.println(bikes);
+
     // Skip until we find our station
     if (strncmp(name, "11 ", 3)!=0)
       continue;
@@ -214,8 +219,6 @@ void loadBike()
 
     break;
   }
-  
-  delay(8000);
 }
 
 void loadBusStop(const char *stop)
@@ -281,15 +284,8 @@ void loadBusStop(const char *stop)
   }
 
   drawFFSJpeg("/foli_s.jpg", 0, 160);
-  
-  delay(8000);
 }
 
-#define EAP_IDENTITY ""
-#define EAP_PASSWORD ""
-
-#define WIFI_SID "Tardis"
-#define WIFI_PWD "TalOrg77"
 
 int wifiSetup()
 {
@@ -375,7 +371,6 @@ void logoSpons()
   drawFFSJpeg("/tsp_s.jpg", 0, 0);
   drawFFSJpeg("/te_s.jpg", 0, 78);
   drawFFSJpeg("/lsjh_s.jpg", 0, 156);
-  delay(3000);
 }
 
 void logoEkotukiTurku()
@@ -383,33 +378,31 @@ void logoEkotukiTurku()
   tft.fillScreen(TFT_WHITE);
   drawFFSJpeg("/ekotuki_s.jpg", 0, 0);      
   drawFFSJpeg("/turku_s.jpg", 0, 80);
-  delay(3000);
 }
 
-int logo(int l)
+int page(int l)
 {
   switch (l) {
     case 0:
       logoSpons();
     break;
     case 1:
-      if (WiFi.status()==WL_CONNECTED)
-        loadBusStop("144");
+      loadBusStop("144");
     break;
     case 2:
-      if (WiFi.status()==WL_CONNECTED)
-        loadBusStop("151");
+      loadBusStop("151");
     break;
     case 3:
-      if (WiFi.status()==WL_CONNECTED)
-        loadBike();
+      loadBike();
     break;
     case 4:
       logoEkotukiTurku();
     break;
     default:
+    delay(5000);
     return -1;
   }
+  delay(5000);
   return 0;
 }
 
@@ -417,11 +410,17 @@ void loop()
 {
   int hv;
 
-  //logos_bw();
-  if (logo(l)==0)
-    l++;
-  else
-    l=0;
+  if (WiFi.status()==WL_CONNECTED) {
+    if (page(l)==0)
+      l++;
+    else
+      l=0;
+  } else {
+    page(0);
+    tft.println("WiFi: Failed");
+    delay(8000);
+    wifiSetup();
+  }
 
   hv=hallRead();
   Serial.print("HAL: ");

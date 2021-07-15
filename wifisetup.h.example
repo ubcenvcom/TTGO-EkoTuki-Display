@@ -1,0 +1,7 @@
+// Set for your network
+
+#define EAP_IDENTITY ""
+#define EAP_PASSWORD ""
+
+#define WIFI_SID "xxxxxxxx"
+#define WIFI_PWD "yyyyyyyy"
